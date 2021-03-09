@@ -1,0 +1,3 @@
+[submodule "kmods-via-containers"]
+	path = kmods-via-containers
+	url = https://github.com/openshift-psap/kmods-via-containers

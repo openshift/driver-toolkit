@@ -1,4 +1,4 @@
-CONTAINER_ENGINE ?= podman
+CONTAINER_ENGINE ?= docker
 PWD              ?= $(shell pwd)			
 
 verify: 

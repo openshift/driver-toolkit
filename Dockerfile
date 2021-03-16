@@ -17,12 +17,13 @@ RUN yum -y install \
     && yum clean all
 
 # real-time kernel packages
-RUN yum -y install \
+RUN if [ $(arch) = x86_64 ]; then \
+    yum -y install \
     kernel-rt-core-${RT_KERNEL_VERSION} \
     kernel-rt-devel-${RT_KERNEL_VERSION} \
     kernel-rt-modules-${RT_KERNEL_VERSION} \
     kernel-rt-modules-extra-${RT_KERNEL_VERSION} \
-    && yum clean all
+    && yum clean all ; fi
 
 # Additional packages that are mandatory for driver-containers
 RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitelists \

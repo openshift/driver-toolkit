@@ -1,28 +1,24 @@
 FROM registry.access.redhat.com/ubi8/ubi 
 
-ARG KERNEL_VERSION
-ARG RT_KERNEL_VERSION
-ARG RHEL_VERSION
-
 RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
     && yum config-manager --best --setopt=install_weak_deps=False --save
 
 # kernel packages needed to build drivers / kmods 
 RUN yum -y install \
-    kernel-core-${KERNEL_VERSION} \
-    kernel-devel-${KERNEL_VERSION} \
-    kernel-headers-${KERNEL_VERSION} \
-    kernel-modules-${KERNEL_VERSION} \
-    kernel-modules-extra-${KERNEL_VERSION} \
+    kernel-core \
+    kernel-devel \
+    kernel-headers \
+    kernel-modules \
+    kernel-modules-extra \
     && yum clean all
 
 # real-time kernel packages
 RUN if [ $(arch) = x86_64 ]; then \
     yum -y install \
-    kernel-rt-core-${RT_KERNEL_VERSION} \
-    kernel-rt-devel-${RT_KERNEL_VERSION} \
-    kernel-rt-modules-${RT_KERNEL_VERSION} \
-    kernel-rt-modules-extra-${RT_KERNEL_VERSION} \
+    kernel-rt-core \
+    kernel-rt-devel \
+    kernel-rt-modules \
+    kernel-rt-modules-extra \
     && yum clean all ; fi
 
 # Additional packages that are mandatory for driver-containers

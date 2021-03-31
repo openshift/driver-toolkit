@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi 
+FROM registry.ci.openshift.org/ocp/4.8:base
 
 ARG KERNEL_VERSION=''
 ARG RT_KERNEL_VERSION=''

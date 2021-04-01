@@ -1,24 +1,24 @@
 FROM registry.access.redhat.com/ubi8/ubi 
 
-ARG KERNEL_VERSION
-ARG RT_KERNEL_VERSION
-ARG RHEL_VERSION
+ARG KERNEL_VERSION=''
+ARG RT_KERNEL_VERSION=''
+ARG RHEL_VERSION=''
 
 # kernel packages needed to build drivers / kmods 
 RUN yum -y --best install \
-    kernel-core-${KERNEL_VERSION} \
-    kernel-devel-${KERNEL_VERSION} \
-    kernel-headers-${KERNEL_VERSION} \
-    kernel-modules-${KERNEL_VERSION} \
-    kernel-modules-extra-${KERNEL_VERSION} \
+    kernel-core-${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-devel-${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-headers-${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-modules-${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-modules-extra-${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     && yum clean all
 
 # real-time kernel packages
 RUN yum -y --best install \
-    kernel-rt-core-${RT_KERNEL_VERSION} \
-    kernel-rt-devel-${RT_KERNEL_VERSION} \
-    kernel-rt-modules-${RT_KERNEL_VERSION} \
-    kernel-rt-modules-extra-${RT_KERNEL_VERSION} \
+    kernel-rt-core-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-devel-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-modules-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-modules-extra-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     && yum clean all
 
 # Additional packages that are mandatory for driver-containers

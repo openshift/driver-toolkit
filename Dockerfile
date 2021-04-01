@@ -15,10 +15,10 @@ RUN yum -y --best install \
 
 # real-time kernel packages
 RUN yum -y --best install \
-    kernel-rt-core-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-devel-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules-extra-${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-core${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-devel${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-modules${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
+    kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     && yum clean all
 
 # Additional packages that are mandatory for driver-containers

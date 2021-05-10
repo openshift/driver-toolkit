@@ -7,6 +7,8 @@ ARG RHEL_VERSION=''
 RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
     && yum config-manager --best --setopt=install_weak_deps=False --save
 
+RUN if [[ "$OPENSHIFT_CI" == "true" ]]; then mv /etc/yum.repos.d/ci-rpm-mirrors.repo /tmp/ci-rpm-mirrors.repo && curl http://base-4-8-rhel84.ocp.svc.cluster.local > /etc/yum.repos.d/rhel84.repo && yum config-manager --enable rhel-8-nfv; fi
+
 # kernel packages needed to build drivers / kmods 
 RUN yum -y install \
     kernel-core${KERNEL_VERSION:+-}${KERNEL_VERSION} \

@@ -43,3 +43,6 @@ RUN make install DESTDIR=/usr/local CONFDIR=/etc/
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
       version="0.1"
+
+# Last layer for mapping the driver-toolkit to the corresponding Node     
+RUN  echo "{ \"KERNEL_VERSION\": \"${KERNEL_VERSION}\", \"RT_KERNEL_VERSION\": \"${RT_KERNEL_VERSION}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json

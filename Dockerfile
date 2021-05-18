@@ -44,5 +44,8 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
       name="driver-toolkit" \
       version="0.1"
 
+ENV INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core)
+ENV INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core)
+
 # Last layer for mapping the driver-toolkit to the corresponding Node     
-RUN  echo "{ \"KERNEL_VERSION\": \"${KERNEL_VERSION:-$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core)}\", \"RT_KERNEL_VERSION\": \"${RT_KERNEL_VERSION:-$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core)}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
+RUN  echo "{ \"KERNEL_VERSION\": \"${KERNEL_VERSION:-${INSTALLED_KERNEL}}\", \"RT_KERNEL_VERSION\": \"${RT_KERNEL_VERSION:-${INSTALLED_RT_KERNEL}}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json

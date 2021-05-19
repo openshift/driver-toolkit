@@ -44,3 +44,8 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
       name="driver-toolkit" \
       io.openshift.release.operator=true \
       version="0.1"
+
+# Last layer for metadata for mapping the driver-toolkit to a specific kernel version
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core); \
+    export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core); \
+    echo "{ \"KERNEL_VERSION\": \"${KERNEL_VERSION:-${INSTALLED_KERNEL}}\", \"RT_KERNEL_VERSION\": \"${RT_KERNEL_VERSION:-${INSTALLED_RT_KERNEL}}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json

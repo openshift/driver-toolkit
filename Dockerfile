@@ -33,6 +33,10 @@ RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitel
 RUN yum -y install git make \
     && yum clean all
 
+# Packages needed to sign and run externally build kernel modules
+RUN yum -y install openssl mokutil keyutils \
+    && yum clean all
+
 # Add and build kmods-via-containers
 COPY kmods-via-containers /tmp/kmods-via-containers
 

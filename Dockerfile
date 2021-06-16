@@ -38,7 +38,8 @@ RUN yum -y install git make \
     && yum clean all
 
 # Packages needed to sign and run externally build kernel modules
-RUN yum -y install openssl mokutil keyutils \
+RUN ARCH_DEP_PKGS=$(case $(arch) in x86_64|aarch64) echo -n mokutil ;; esac) \
+    && yum -y install openssl keyutils $ARCH_DEP_PKGS \
     && yum clean all
 
 # Add and build kmods-via-containers

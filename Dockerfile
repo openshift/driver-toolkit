@@ -33,6 +33,12 @@ RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitel
 RUN yum -y install xz diffutils \
     && yum clean all
     
+# Find and install the GCC version used to compile the kernel
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
+&& /usr/src/kernels/${INSTALLED_KERNEL}/scripts/extract-vmlinux /lib/modules/${INSTALLED_KERNEL}/vmlinuz | strings | grep -E '^Linux version'  > /tmp/kernel_info \
+&& GCC_VERSION=$(cat /tmp/kernel_info | grep -Eo "gcc version ([0-9\.]+)" | grep -Eo "([0-9\.]+)") \
+&& yum -y install gcc-${GCC_VERSION}
+
 # Packages needed to build kmods-via-containers and likely needed for driver-containers
 RUN yum -y install git make \
     && yum clean all

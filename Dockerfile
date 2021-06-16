@@ -30,7 +30,7 @@ RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitel
     && yum clean all
     
 # Additional packages that are needed for a subset (e.g DPDK) of driver-containers
-RUN yum -y install xz diffutils \
+RUN yum -y install gcc xz diffutils \
     && yum clean all
     
 # Packages needed to build kmods-via-containers and likely needed for driver-containers

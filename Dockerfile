@@ -34,10 +34,15 @@ RUN yum -y install xz diffutils \
     && yum clean all
     
 # Find and install the GCC version used to compile the kernel
-RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
-&& /usr/src/kernels/${INSTALLED_KERNEL}/scripts/extract-vmlinux /lib/modules/${INSTALLED_KERNEL}/vmlinuz | strings | grep -E '^Linux version'  > /tmp/kernel_info \
+# If it cannot be found (fails on some architecutres), install the default gcc
+RUN curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux \
+&& chmod +x /usr/local/bin/extract-vmlinux \
+&& export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
+&& /usr/local/bin/extract-vmlinux /lib/modules/${INSTALLED_KERNEL}/vmlinuz | strings | grep -E '^Linux version'  > /tmp/kernel_info \
 && GCC_VERSION=$(cat /tmp/kernel_info | grep -Eo "gcc version ([0-9\.]+)" | grep -Eo "([0-9\.]+)") \
-&& yum -y install gcc-${GCC_VERSION}
+&& yum -y install gcc-${GCC_VERSION} \
+|| yum -y install gcc && \
+yum clean all
 
 # Packages needed to build kmods-via-containers and likely needed for driver-containers
 RUN yum -y install git make \

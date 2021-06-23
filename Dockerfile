@@ -28,7 +28,11 @@ RUN if [ $(arch) = x86_64 ]; then \
 # Additional packages that are mandatory for driver-containers
 RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitelists \
     && yum clean all
-
+    
+# Additional packages that are needed for a subset (e.g DPDK) of driver-containers
+RUN yum -y install xz diffutils \
+    && yum clean all
+    
 # Packages needed to build kmods-via-containers and likely needed for driver-containers
 RUN yum -y install git make \
     && yum clean all

@@ -37,6 +37,12 @@ RUN yum -y install xz diffutils \
 RUN yum -y install git make \
     && yum clean all
 
+# Packages needed to sign and run externally build kernel modules
+RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
+    ARCH_DEP_PKGS="mokutil"; fi \
+    && yum -y install openssl keyutils $ARCH_DEP_PKGS \
+    && yum clean all
+
 # Add and build kmods-via-containers
 COPY kmods-via-containers /tmp/kmods-via-containers
 

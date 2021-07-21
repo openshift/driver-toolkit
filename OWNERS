@@ -4,9 +4,8 @@ approvers:
 reviewers:
   - zvonkok
   - courtneypacheco
-  - sjug
   - jmencak
   - ArangoGutierrez
   - dagrayvid
   - kpouget
-component: "Special Resource Operator"
+component: "Driver Toolkit"

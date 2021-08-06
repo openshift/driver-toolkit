@@ -35,11 +35,8 @@ RUN yum -y install xz diffutils \
     
 # Find and install the GCC version used to compile the kernel
 # If it cannot be found (fails on some architecutres), install the default gcc
-RUN curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux \
-&& chmod +x /usr/local/bin/extract-vmlinux \
-&& export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
-&& /usr/local/bin/extract-vmlinux /lib/modules/${INSTALLED_KERNEL}/vmlinuz | strings | grep -E '^Linux version'  > /tmp/kernel_info \
-&& GCC_VERSION=$(cat /tmp/kernel_info | grep -Eo "gcc version ([0-9\.]+)" | grep -Eo "([0-9\.]+)") \
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
+&& GCC_VERSION=$(cat /lib/modules/${INSTALLED_KERNEL}/config | grep -Eo "Compiler: gcc \(GCC\) ([0-9\.]+)" | grep -Eo "([0-9\.]+)") \
 && yum -y install gcc-${GCC_VERSION} \
 || yum -y install gcc && \
 yum clean all

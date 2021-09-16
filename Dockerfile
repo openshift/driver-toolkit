@@ -58,8 +58,6 @@ WORKDIR /tmp/kmods-via-containers
 
 RUN make install DESTDIR=/usr/local CONFDIR=/etc/
 
-COPY manifests /manifests
-
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
       io.openshift.release.operator=true \

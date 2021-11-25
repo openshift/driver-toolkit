@@ -7,7 +7,7 @@ set -eux -o pipefail
 get_node_os_release_file() {
     os_release_file=${ARTIFACT_DIR}/etc-os-release
     if [[ ! -s "${os_release_file}" ]]; then 
-	    worker_node=$(kubectl get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
+	    worker_node=$(oc get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
 
 	    oc debug node/${worker_node} \
             --quiet \

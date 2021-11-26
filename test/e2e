@@ -10,6 +10,7 @@ get_node_os_release_file() {
 	    worker_node=$(oc get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
 
 	    oc debug node/${worker_node} \
+            -n default \
             --quiet \
             -- cat /host/etc/os-release > ${os_release_file}
     fi
@@ -84,6 +85,7 @@ get_driver_toolkit_release_file(){
 
     if [[ ! -s "${driver_toolkit_release}" ]]; then 
 	    oc debug --image-stream="openshift/driver-toolkit:latest" \
+		    -n openshift \
 		    --quiet \
 		    -- cat /etc/driver-toolkit-release.json \
 		    > ${driver_toolkit_release}
@@ -127,6 +129,7 @@ test_rhel_version() {
 list_kernel_packages() {
     # Check that DTK contains all the packages
     oc debug --image-stream="openshift/driver-toolkit:latest" \
+	    -n openshift \
             --quiet \
             -- dnf list installed | grep kernel
 }

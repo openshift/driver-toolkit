@@ -1,12 +1,12 @@
 #! /bin/bash
 
-set -eux -o pipefail 
+set -eux -o pipefail
 
 # Gets the /etc/os-release file from a worker node host OS
 # Sends the resulting filename to stdout
 get_node_os_release_file() {
     os_release_file=${ARTIFACT_DIR}/etc-os-release
-    if [[ ! -s "${os_release_file}" ]]; then 
+    if [[ ! -s "${os_release_file}" ]]; then
 	    worker_node=$(oc get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
 
 	    oc debug node/${worker_node} \
@@ -53,13 +53,15 @@ test_imagestream_tags() {
     echo "INFO: Node RHCOS version: ${rhcos_version}"
 
     oc get imagestream/driver-toolkit -n openshift -o json | jq ".spec.tags[].name"
-    
+
     image_latest=$(oc get imagestream/driver-toolkit -n openshift -o json \
-    	| jq ".spec.tags[] | select(.name == \"latest\") | .from.name")
+    	               | jq -r ".spec.tags[] | select(.name == \"latest\") | .from.name")
     echo "INFO: Image from latest tag: ${image_latest}"
-        
+
+    echo "$image_latest" > ${ARTIFACT_DIR}/latest_image.address
+
     image_rhcos_tag=$(oc get imagestream/driver-toolkit -n openshift -o json \
-    	| jq ".spec.tags[] | select(.name == \"${rhcos_version}\") | .from.name")
+    	                  | jq  -r ".spec.tags[] | select(.name == \"${rhcos_version}\") | .from.name")
     echo "INFO: Image from RHCOS tag: ${image_rhcos_tag}"
 
     if [[ ${image_latest} == "" ]]; then
@@ -71,7 +73,7 @@ test_imagestream_tags() {
 	    echo "ERROR: driver-toolkit RHCOS version tag is empty string"
 	    exit 1
     fi
-    
+
     if [[ ${image_rhcos_tag} != ${image_latest} ]]; then
 	    echo "ERROR: driver-toolkit latest and RHCOS version tags mismatch (${image_rhos_tag} != ${image_latest})"
 	    exit 1
@@ -83,7 +85,7 @@ test_imagestream_tags() {
 get_driver_toolkit_release_file(){
     driver_toolkit_release=${ARTIFACT_DIR}/driver-toolkit-release.json
 
-    if [[ ! -s "${driver_toolkit_release}" ]]; then 
+    if [[ ! -s "${driver_toolkit_release}" ]]; then
 	    oc debug --image-stream="openshift/driver-toolkit:latest" \
 		    -n openshift \
 		    --quiet \
@@ -96,6 +98,8 @@ get_driver_toolkit_release_file(){
 
 # Check that driver-toolkit contains the right kernel version
 test_kernel_version() {
+    oc get nodes -oyaml > ${ARTIFACT_DIR}/nodes.yaml
+
     node_kernel=$(oc get nodes -ojsonpath='{.items[].status.nodeInfo.kernelVersion}')
     echo "INFO: Node kernel: ${node_kernel}"
 
@@ -103,7 +107,10 @@ test_kernel_version() {
 
     dtk_kernel=$(cat ${dtk_release_file} | jq -r .KERNEL_VERSION)
     echo "INFO: driver-toolkit kernel: ${dtk_kernel}"
-    
+
+    echo "${dtk_kernel}" > ${ARTIFACT_DIR}/dtk-kernel.version
+    echo "${node_kernel}" > ${ARTIFACT_DIR}/node-kernel.version
+
     if [[ ${dtk_kernel} !=  ${node_kernel} ]]; then
 	    echo "ERROR: driver-toolkit and node kernel version mismatch: (${dtk_kernel} !=  ${node_kernel})"
 	    exit 1
@@ -119,7 +126,10 @@ test_rhel_version() {
 
     dtk_rhel_version=$(cat ${dtk_release_file} | jq -r .RHEL_VERSION)
     echo "INFO: driver-toolkit RHEL version: ${dtk_rhel_version}"
-    
+
+    echo "${dtk_rhel_version}" > ${ARTIFACT_DIR}/dtk-rhel.version
+    echo "${node_rhel_version}" > ${ARTIFACT_DIR}/node-rhel.version
+
     if [[ ${dtk_rhel_version} !=  ${node_rhel_version} ]]; then
 	    echo "ERROR: driver-toolkit and node RHEL version mismatch: ${dtk_rhel_version} !=  ${node_rhel_version})"
 	    exit 1
@@ -129,9 +139,25 @@ test_rhel_version() {
 list_kernel_packages() {
     # Check that DTK contains all the packages
     oc debug --image-stream="openshift/driver-toolkit:latest" \
-	    -n openshift \
-            --quiet \
-            -- dnf list installed | grep kernel
+	     -n openshift \
+             --quiet \
+             -- dnf list installed \
+        | grep kernel \
+        | tee ${ARTIFACT_DIR}/dnf-list-installed-kernel
+}
+
+get_dtk_image_info() {
+    oc debug --image-stream="openshift/driver-toolkit:latest" \
+             -n openshift \
+             --quiet \
+             -- bash -c 'echo "$SOURCE_GIT_URL/commit/$SOURCE_GIT_COMMIT"' \
+            > ${ARTIFACT_DIR}/git_commit
+
+    oc debug --image-stream="openshift/driver-toolkit:latest" \
+	     -n openshift \
+             --quiet \
+             -- env \
+             > ${ARTIFACT_DIR}/dtk_image_env
 }
 
 set_artifact_dir() {
@@ -142,10 +168,17 @@ set_artifact_dir() {
 	else
 		echo "Using ARTIFACT_DIR=$ARTIFACT_DIR."
 	fi
+
+        oc version -o json \
+            | jq --raw-output '.openshiftVersion' \
+                 > ${ARTIFACT_DIR}/ocp.version # for display in ci-dashboard
+
+        oc get clusterversion/version -oyaml > ${ARTIFACT_DIR}/ocp_version.yaml
 }
 
 echo "#### Driver Toolkit e2e test ####"
 set_artifact_dir
+get_dtk_image_info
 
 echo
 echo "## TEST: Checking imagestream/driver-toolkit ##"

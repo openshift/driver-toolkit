@@ -1,9 +1,18 @@
 approvers:
   - dagrayvid
+  - bthurber
+  - pacevedom
+  - pmtk
+  - qbarrand
+  - yevgeny-shnaidman
+  - ybettan
 reviewers:
-  - courtneypacheco
-  - jmencak
-  - ArangoGutierrez
   - dagrayvid
   - kpouget
+  - bthurber
+  - pacevedom
+  - pmtk
+  - qbarrand
+  - ybettan
+  - yevgeny-shnaidman
 component: "Driver Toolkit"

@@ -45,7 +45,11 @@ The following steps require the image pull secret needed to perform an installat
 
 The image URL of the `driver-toolkit` corresponding to a certain release can be extracted from the release image using the `oc adm` command:
 ```bash
-$ oc adm release info 4.8.0 --image-for=driver-toolkit
+# For x86 image:
+$ oc adm release info quay.io/openshift-release-dev/ocp-release:4.8.0-x86_64 --image-for=driver-toolkit
+
+# For ARM image:
+$ oc adm release info quay.io/openshift-release-dev/ocp-release:4.8.0-aarch64 --image-for=driver-toolkit
 ```
 
 Example output:
@@ -101,9 +105,7 @@ spec:
 
       WORKDIR /build/
 
-      RUN yum -y install git make sudo gcc \
-      && yum clean all \
-      && rm -rf /var/cache/dnf
+      # In case additional packages are required, you need to manually add the yum repos to the container
 
       # Expecting kmod software version as an input to the build
       ARG KMODVER

@@ -96,10 +96,6 @@ spec:
     - type: "ConfigChange"
     - type: "ImageChange"
   source:
-    git:
-      ref: "master"
-      uri: "https://github.com/openshift-psap/kvc-simple-kmod.git"
-    type: Git
     dockerfile: |
       FROM DRIVER_TOOLKIT_IMAGE
 
@@ -115,21 +111,9 @@ spec:
       WORKDIR simple-kmod
 
       # Prep and build the module
-      RUN make buildprep KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER} \
-      && make all       KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER} \
+      RUN make all       KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER} \
       && make install   KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER}
 
-      # Add the helper tools
-      WORKDIR /root/kvc-simple-kmod
-      ADD Makefile .
-      ADD simple-kmod-lib.sh .
-      ADD simple-kmod-wrapper.sh .
-      ADD simple-kmod.conf .
-      RUN mkdir -p /usr/lib/kvc/ \
-      && mkdir -p /etc/kvc/ \
-      && make install
-
-      RUN systemctl enable kmods-via-containers@simple-kmod
   strategy:
     dockerStrategy:
       buildArgs:
@@ -204,11 +188,14 @@ spec:
       - image: image-registry.openshift-image-registry.svc:5000/simple-kmod-demo/simple-kmod-driver-container:demo
         name: simple-kmod-driver-container
         imagePullPolicy: Always
-        command: ["/sbin/init"]
+        command: [sleep, infinity]
         lifecycle:
+          postStart:
+            exec:
+              command: ["modprobe", "-v", "simple-kmod"]
           preStop:
             exec:
-              command: ["/bin/sh", "-c", "systemctl stop kmods-via-containers@simple-kmod"]
+              command: ["modprobe", "-r", "simple-kmod"]
         securityContext:
           privileged: true
       nodeSelector:

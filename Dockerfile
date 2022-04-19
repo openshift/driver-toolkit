@@ -1,9 +1,7 @@
 FROM registry.ci.openshift.org/ocp/4.11:base
-
 ARG KERNEL_VERSION=''
 ARG RT_KERNEL_VERSION=''
 ARG RHEL_VERSION=''
-
 RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
     && yum config-manager --best --setopt=install_weak_deps=False --save
 
@@ -41,7 +39,7 @@ yum clean all
 RUN yum -y install xz diffutils \
     && yum clean all
     
-# Packages needed to build kmods-via-containers and likely needed for driver-containers
+# Packages needed to build driver-containers
 RUN yum -y install git make \
     && yum clean all
 
@@ -50,15 +48,6 @@ RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
     ARCH_DEP_PKGS="mokutil"; fi \
     && yum -y install openssl keyutils $ARCH_DEP_PKGS \
     && yum clean all
-
-# Add and build kmods-via-containers
-COPY kmods-via-containers /tmp/kmods-via-containers
-
-WORKDIR /tmp/kmods-via-containers
-
-RUN make install DESTDIR=/usr/local CONFDIR=/etc/
-
-COPY manifests /manifests
 
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
@@ -69,3 +58,4 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
 RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core); \
     export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core); \
     echo "{ \"KERNEL_VERSION\": \"${INSTALLED_KERNEL}\", \"RT_KERNEL_VERSION\": \"${INSTALLED_RT_KERNEL}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
+

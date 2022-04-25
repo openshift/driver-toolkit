@@ -97,23 +97,22 @@ spec:
     - type: "ImageChange"
   source:
     dockerfile: |
-      FROM DRIVER_TOOLKIT_IMAGE
+      FROM <driver-toolkit image> as builder
 
       WORKDIR /build/
 
-      # In case additional packages are required, you need to manually add the yum repos to the container
-
-      # Expecting kmod software version as an input to the build
-      ARG KMODVER
-
-      # Grab the software from upstream
       RUN git clone https://github.com/openshift-psap/simple-kmod.git
-      WORKDIR simple-kmod
 
-      # Prep and build the module
-      RUN make all       KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER} \
-      && make install   KVER=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) KMODVER=${KMODVER}
+      WORKDIR /build/simple-kmod
 
+      RUN make all install # [KVER=<kenel version if not default>] [KMODVER=<kernel module version if not default>]
+
+      FROM registry.access.redhat.com/ubi8:latest
+
+      RUN dnf -y install kmod
+
+      COPY --from=builder /etc/driver-toolkit-release.json /etc/ # special-resource-operator is expecting that file
+      COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/
   strategy:
     dockerStrategy:
       buildArgs:

@@ -1,0 +1,12 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+spec:
+  tags:
+  - name: driver-toolkit
+    from:
+      kind: DockerImage
+      name: example.com/image-reference-placeholder:driver-toolkit
+  - name: machine-os-content
+    from:
+      kind: DockerImage
+      name: registry.svc.ci.openshift.org/openshift:machine-os-content

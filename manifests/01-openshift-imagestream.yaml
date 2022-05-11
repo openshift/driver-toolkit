@@ -1,0 +1,23 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  namespace: openshift
+  name: driver-toolkit
+  annotations:
+    include.release.openshift.io/ibm-cloud-managed: "true"
+    include.release.openshift.io/self-managed-high-availability: "true"
+    include.release.openshift.io/single-node-developer: "true"
+spec:
+  tags:
+  - name: latest
+    importPolicy:
+      scheduled: true
+    from:
+      kind: DockerImage
+      name: example.com/image-reference-placeholder:driver-toolkit
+  - name: 0.0.1-snapshot-machine-os 
+    importPolicy:
+      scheduled: true
+    from:
+      kind: DockerImage
+      name: example.com/image-reference-placeholder:driver-toolkit

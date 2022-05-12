@@ -107,9 +107,9 @@ spec:
 
       RUN make all install # [KVER=<kenel version if not default>] [KMODVER=<kernel module version if not default>]
 
-      FROM registry.access.redhat.com/ubi8:latest
+      FROM registry.redhat.io/ubi8/ubi-minimal
 
-      RUN dnf -y install kmod
+      RUN microdnf -y install kmod
 
       COPY --from=builder /etc/driver-toolkit-release.json /etc/ # special-resource-operator is expecting that file
       COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/

@@ -49,6 +49,8 @@ RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
     && yum -y install openssl keyutils $ARCH_DEP_PKGS \
     && yum clean all
 
+COPY manifests /manifests
+
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
       io.openshift.release.operator=true \

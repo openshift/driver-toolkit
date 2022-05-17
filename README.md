@@ -191,10 +191,10 @@ spec:
         lifecycle:
           postStart:
             exec:
-              command: ["modprobe", "-v", "simple-kmod"]
+              command: ["modprobe", "-v", "-a" , "simple-kmod", "simple-procfs-kmod"]
           preStop:
             exec:
-              command: ["modprobe", "-r", "simple-kmod"]
+              command: ["modprobe", "-r", "-a" , "simple-kmod", "simple-procfs-kmod"]
         securityContext:
           privileged: true
       nodeSelector:

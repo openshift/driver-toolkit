@@ -6,3 +6,5 @@ verify:
 
 test-e2e:
 	./test/e2e
+
+random-target: do-not-merge

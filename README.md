@@ -111,8 +111,9 @@ spec:
 
       RUN microdnf -y install kmod
 
-      COPY --from=builder /etc/driver-toolkit-release.json /etc/ # special-resource-operator is expecting that file
-      COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/
+      # special-resource-operator is expecting that file
+      COPY --from=builder /etc/driver-toolkit-release.json /etc/
+      COPY --from=builder /lib/modules/<kernel version>/* /opt/lib/modules/<kernel version>/
   strategy:
     dockerStrategy:
       buildArgs:
@@ -191,14 +192,15 @@ spec:
         lifecycle:
           postStart:
             exec:
-              command: ["modprobe", "-v", "-a" , "simple-kmod", "simple-procfs-kmod"]
+              command: ["modprobe", "-b", "/opt/lib/modules/<kver>", "-v", "-a" , "simple-kmod", "simple-procfs-kmod"]
           preStop:
             exec:
-              command: ["modprobe", "-r", "-a" , "simple-kmod", "simple-procfs-kmod"]
+              command: ["modprobe", "-b", "/opt/lib/modules/<kver>", "-r", "-a" , "simple-kmod", "simple-procfs-kmod"]
         securityContext:
           privileged: true
       nodeSelector:
         node-role.kubernetes.io/worker: ""
+#FIXME:ybettan: mount /lib/modules/<kver> from the node for in-tree dependencies
 
 ```
 

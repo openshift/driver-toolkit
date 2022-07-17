@@ -109,7 +109,8 @@ spec:
 
       FROM registry.redhat.io/ubi8/ubi-minimal
 
-      RUN microdnf -y install kmod
+      # better to copy it from builder rather than pulling it from the internet so it work also with disconnected envs
+      COPY --from=builder /usr/bin/kmod /usr/bin/
 
       COPY --from=builder /etc/driver-toolkit-release.json /etc/ # special-resource-operator is expecting that file
       COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/

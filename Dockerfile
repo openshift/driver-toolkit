@@ -36,7 +36,7 @@ RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kerne
 yum clean all
 
 # Additional packages that are needed for a subset (e.g DPDK) of driver-containers
-RUN yum -y install xz diffutils \
+RUN yum -y install xz diffutils flex bison \
     && yum clean all
     
 # Packages needed to build driver-containers

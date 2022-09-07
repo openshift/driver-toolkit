@@ -1,15 +1,17 @@
 approvers:
-  - dagrayvid
   - bthurber
+  - dagrayvid
+  - enriquebelarte
   - pacevedom
   - pmtk
   - qbarrand
-  - yevgeny-shnaidman
   - ybettan
+  - yevgeny-shnaidman
 reviewers:
-  - dagrayvid
-  - kpouget
   - bthurber
+  - dagrayvid
+  - enriquebelarte
+  - kpouget
   - pacevedom
   - pmtk
   - qbarrand

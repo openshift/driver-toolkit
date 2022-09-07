@@ -2,6 +2,21 @@
 
 set -eux -o pipefail
 
+# Create a namespace for `oc debug` with correct pod
+# security labels (needed since 4.12)
+TEST_NS=openshift-e2e-driver-toolkit
+oc create ns $TEST_NS -o yaml | \
+  oc label -f - \
+  security.openshift.io/scc.podSecurityLabelSync=false \
+  pod-security.kubernetes.io/enforce=privileged \
+  pod-security.kubernetes.io/audit=privileged \
+  pod-security.kubernetes.io/warn=privileged
+
+function cleanup() {
+  oc delete ns $TEST_NS
+}
+trap cleanup EXIT
+
 # Gets the /etc/os-release file from a worker node host OS
 # Sends the resulting filename to stdout
 get_node_os_release_file() {
@@ -10,7 +25,7 @@ get_node_os_release_file() {
 	    worker_node=$(oc get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
 
 	    oc debug node/${worker_node} \
-            -n default \
+            -n $TEST_NS \
             --quiet \
             -- cat /host/etc/os-release > ${os_release_file}
     fi
@@ -87,7 +102,7 @@ get_driver_toolkit_release_file(){
 
     if [[ ! -s "${driver_toolkit_release}" ]]; then
 	    oc debug --image-stream="openshift/driver-toolkit:latest" \
-		    -n openshift \
+		    -n $TEST_NS \
 		    --quiet \
 		    -- cat /etc/driver-toolkit-release.json \
 		    > ${driver_toolkit_release}
@@ -139,7 +154,7 @@ test_rhel_version() {
 list_kernel_packages() {
     # Check that DTK contains all the packages
     oc debug --image-stream="openshift/driver-toolkit:latest" \
-	     -n openshift \
+	     -n $TEST_NS \
              --quiet \
              -- dnf list installed \
         | grep kernel \
@@ -148,13 +163,13 @@ list_kernel_packages() {
 
 get_dtk_image_info() {
     oc debug --image-stream="openshift/driver-toolkit:latest" \
-             -n openshift \
+             -n $TEST_NS \
              --quiet \
              -- bash -c 'echo "$SOURCE_GIT_URL/commit/$SOURCE_GIT_COMMIT"' \
             > ${ARTIFACT_DIR}/git_commit
 
     oc debug --image-stream="openshift/driver-toolkit:latest" \
-	     -n openshift \
+	     -n $TEST_NS \
              --quiet \
              -- env \
              > ${ARTIFACT_DIR}/dtk_image_env

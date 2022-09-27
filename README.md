@@ -111,8 +111,11 @@ spec:
 
       # better to copy it from builder rather than pulling it from the internet so it work also with disconnected envs
       COPY --from=builder /usr/bin/kmod /usr/bin/
+      RUN for link in /usr/bin/modprobe /usr/bin/rmmod; do \
+          ln -s /usr/bin/kmod "$link"; done
 
-      COPY --from=builder /etc/driver-toolkit-release.json /etc/ # special-resource-operator is expecting that file
+      # special-resource-operator is expecting that file 
+      COPY --from=builder /etc/driver-toolkit-release.json /etc/ 
       COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/
   strategy:
     dockerStrategy:

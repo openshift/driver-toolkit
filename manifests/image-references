@@ -6,7 +6,3 @@ spec:
     from:
       kind: DockerImage
       name: example.com/image-reference-placeholder:driver-toolkit
-  - name: machine-os-content
-    from:
-      kind: DockerImage
-      name: registry.svc.ci.openshift.org/openshift:machine-os-content

@@ -15,4 +15,9 @@ spec:
     from:
       kind: DockerImage
       name: example.com/image-reference-placeholder:driver-toolkit
-
+  - name: 0.0.1-snapshot-machine-os 
+    importPolicy:
+      scheduled: true
+    from:
+      kind: DockerImage
+      name: example.com/image-reference-placeholder:driver-toolkit

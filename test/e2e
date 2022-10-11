@@ -62,6 +62,39 @@ test_imagestream() {
     oc get imagestream/driver-toolkit -n openshift -o yaml > ${ARTIFACT_DIR}/driver-toolkit-imagestream.yaml
 }
 
+# Check for latest and RHCOS tags
+test_imagestream_tags() {
+    rhcos_version=$(get_node_rhcos_version)
+    echo "INFO: Node RHCOS version: ${rhcos_version}"
+
+    oc get imagestream/driver-toolkit -n openshift -o json | jq ".spec.tags[].name"
+
+    image_latest=$(oc get imagestream/driver-toolkit -n openshift -o json \
+    	               | jq -r ".spec.tags[] | select(.name == \"latest\") | .from.name")
+    echo "INFO: Image from latest tag: ${image_latest}"
+
+    echo "$image_latest" > ${ARTIFACT_DIR}/latest_image.address
+
+    image_rhcos_tag=$(oc get imagestream/driver-toolkit -n openshift -o json \
+    	                  | jq  -r ".spec.tags[] | select(.name == \"${rhcos_version}\") | .from.name")
+    echo "INFO: Image from RHCOS tag: ${image_rhcos_tag}"
+
+    if [[ ${image_latest} == "" ]]; then
+	    echo "ERROR: driver-toolkit latest tag is empty string"
+	    exit 1
+    fi
+
+    if [[ ${image_rhcos_tag} == "" ]]; then
+	    echo "ERROR: driver-toolkit RHCOS version tag is empty string"
+	    exit 1
+    fi
+
+    if [[ ${image_rhcos_tag} != ${image_latest} ]]; then
+	    echo "ERROR: driver-toolkit latest and RHCOS version tags mismatch (${image_rhos_tag} != ${image_latest})"
+	    exit 1
+    fi
+}
+
 # Gets the /etc/driver-toolkit-release.json file from driver-toolkit
 # Sends the resulting filename to stdout
 get_driver_toolkit_release_file(){
@@ -165,6 +198,10 @@ get_dtk_image_info
 echo
 echo "## TEST: Checking imagestream/driver-toolkit ##"
 test_imagestream
+
+echo
+echo "## TEST: Checking that driver-toolkit/imagestream latest and RHCOS tag are matching and non-empty ##"
+test_imagestream_tags
 
 echo
 echo "## TEST: Checking that RHEL version in driver-toolkit matches the node ##"

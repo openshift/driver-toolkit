@@ -25,6 +25,8 @@ RUN if [ $(arch) = x86_64 ]; then \
     kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     && yum clean all ; fi
 
+RUN yum -y install kernel-rpm-macros
+
 # Additional packages that are mandatory for driver-containers
 RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitelists \
     && yum clean all

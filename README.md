@@ -97,7 +97,10 @@ spec:
     - type: "ImageChange"
   source:
     dockerfile: |
-      FROM <driver-toolkit image> as builder
+      ARG DTK
+      FROM ${DTK} as builder
+
+      ARG KVER
 
       WORKDIR /build/
 
@@ -105,23 +108,28 @@ spec:
 
       WORKDIR /build/simple-kmod
 
-      RUN make all install # [KVER=<kenel version if not default>] [KMODVER=<kernel module version if not default>]
+      RUN make all install KVER=${KVER}
 
       FROM registry.redhat.io/ubi8/ubi-minimal
 
-      # better to copy it from builder rather than pulling it from the internet so it work also with disconnected envs
-      COPY --from=builder /usr/bin/kmod /usr/bin/
-      RUN for link in /usr/bin/modprobe /usr/bin/rmmod; do \
-          ln -s /usr/bin/kmod "$link"; done
+      ARG KVER
 
-      # kernel-module-management (operator) is expecting that file
-      COPY --from=builder /etc/driver-toolkit-release.json /etc/ 
-      COPY --from=builder /lib/modules/<kernel version>/* /lib/modules/<kernel version>/
+      # Required for installing `modprobe`
+      RUN microdnf install kmod
+
+      COPY --from=builder /lib/modules/${KVER}/simple-kmod.ko /lib/modules/${KVER}/
+      COPY --from=builder /lib/modules/${KVER}/simple-procfs-kmod.ko /lib/modules/${KVER}/
+      RUN depmod ${KVER}
   strategy:
     dockerStrategy:
       buildArgs:
         - name: KMODVER
           value: DEMO
+          # $ oc adm release info quay.io/openshift-release-dev/ocp-release:<cluster version>-x86_64 --image-for=driver-toolkit
+        - name: DTK
+          value: quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:34864ccd2f4b6e385705a730864c04a40908e57acede44457a783d739e377cae
+        - name: KVER
+          value: 4.18.0-372.26.1.el8_6.x86_64
   output:
     to:
       kind: ImageStreamTag

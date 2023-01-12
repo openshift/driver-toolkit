@@ -70,7 +70,7 @@ Create a namespace for the resources:
 $ oc new-project simple-kmod-demo
 ```
 
-The following YAML defines an `ImageStream` for storing the simple-kmod driver container image, and a `BuildConfig` for building the container. Save [this YAML](https://raw.githubusercontent.com/dagrayvid/blog-artifacts/driver-toolkit-blog/introducing-driver-toolkit/0000-buildconfig.yaml.template "this YAML") as `0000-buildconfig.yaml.template`.
+The following YAML defines an `ImageStream` for storing the simple-kmod driver container image, and a `BuildConfig` for building the container. Save this YAML as `0000-buildconfig.yaml.template`.
 ```yaml
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -144,7 +144,7 @@ $ DRIVER_TOOLKIT_IMAGE=$(oc adm release info $OCP_VERSION --image-for=driver-too
 $ sed “s#DRIVER_TOOLKIT_IMAGE#$DRIVER_TOOLKIT_IMAGE#” 0000-buildconfig.yaml.template > 0000-buildconfig.yaml
 ```
 
-Once the builder pod completes successfully, deploy the driver container image as a DaemonSet. The driver container needs to run with the privileged security context in order to load the kernel modules on the host. The following .yaml file contains the RBAC rules and the DaemonSet for running the driver container. Save [this YAML](https://raw.githubusercontent.com/dagrayvid/blog-artifacts/driver-toolkit-blog/introducing-driver-toolkit/1000-driver-container.yaml "this YAML") as `1000-driver-container.yaml`.
+Once the builder pod completes successfully, deploy the driver container image as a DaemonSet. The driver container needs to run with the privileged security context in order to load the kernel modules on the host. The following .yaml file contains the RBAC rules and the DaemonSet for running the driver container. Save this YAML as `1000-driver-container.yaml`.
 
 ```yaml
 apiVersion: v1

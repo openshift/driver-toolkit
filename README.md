@@ -1,30 +1,9 @@
 # Driver Toolkit
-The Driver Toolkit is a container image in the OpenShift payload which is meant to be used as a base image on which to build driver containers. The Driver Toolkit image [contains](https://github.com/openshift/driver-toolkit/blob/master/Dockerfile "contains") the kernel packages commonly required as dependencies to build or install kernel modules as well as a few tools needed in driver containers. The version of these packages will match the kernel version running on the RHCOS nodes in the corresponding OpenShift release. 
+The Driver Toolkit (DTK from now on)is a container image in the OpenShift payload which is meant to be used as a base image on which to build driver containers. The Driver Toolkit image [contains](https://github.com/openshift/driver-toolkit/blob/master/Dockerfile "contains") the kernel packages commonly required as dependencies to build or install kernel modules as well as a few tools needed in driver containers. The version of these packages will match the kernel version running on the RHCOS nodes in the corresponding OpenShift release.
 
 Driver containers are container images used for building and deploying out-of-tree kernel modules and drivers on container OSs like Red Hat Enterprise Linux CoreOS (RHCOS). Kernel modules and drivers are software libraries running with a high level of privilege in the operating system kernel. They extend the kernel functionalities or provide the hardware-specific code required to control new devices.  Examples include hardware devices like FPGAs or GPUs, and software defined storage (SDS) solutions like Lustre parallel filesystem, which all require kernel modules on client machines. Driver containers are the first layer of the software stack used to enable these technologies on Kubernetes.
 
-The list of kernel packages in the Driver Toolkit includes the following and their dependencies:
-
-* `kernel-core`
-* `kernel-devel`
-* `kernel-headers`
-* `kernel-modules`
-* `kernel-modules-extra`
-
-In addition, the Driver Toolkit also includes the corresponding real-time kernel packages:
-
-* `kernel-rt-core`
-* `kernel-rt-devel`
-* `kernel-rt-modules`
-* `kernel-rt-modules-extra`
-
-The Driver Toolkit also has several tools which are commonly needed to build and install kernel modules, including:
-
-* `elfutils-libelf-devel`
-* `kmod`
-* `binutilskabi-dw`
-* `kernel-abi-whitelists`
-* dependencies for the above
+The list of the packages installed in the `DTK` can be found in the [Dockerfile](./Dockerfile).
 
 ##  Purpose
 Prior to the Driver Toolkit's existence, you could install kernel packages in a pod or build config on OpenShift using [entitled builds](https://www.openshift.com/blog/how-to-use-entitled-image-builds-to-build-drivercontainers-with-ubi-on-openshift "entitled builds") or by installing from the kernel RPMs in the hosts `machine-os-content`. The Driver Toolkit simplifies the process by removing the entitlement step, and avoids the privileged operation of accessing the machine-os-content in a pod. The Driver Toolkit can also be used by partners who have access to pre-released OpenShift versions to prebuild driver-containers for their hardware devices for future OpenShift releases.
@@ -70,7 +49,7 @@ Create a namespace for the resources:
 $ oc new-project simple-kmod-demo
 ```
 
-The following YAML defines an `ImageStream` for storing the simple-kmod driver container image, and a `BuildConfig` for building the container. Save [this YAML](https://raw.githubusercontent.com/dagrayvid/blog-artifacts/driver-toolkit-blog/introducing-driver-toolkit/0000-buildconfig.yaml.template "this YAML") as `0000-buildconfig.yaml.template`.
+The following YAML defines an `ImageStream` for storing the simple-kmod driver container image, and a `BuildConfig` for building the container. You can apply the following yaml:
 ```yaml
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -136,15 +115,9 @@ spec:
       name: simple-kmod-driver-container:demo
 ```
 
-Substitute the correct driver toolkit image for the OpenShift version you are running in place of `DRIVER_TOOLKIT_IMAGE` with the following commands. Note that the driver toolkit was introduced in 4.6 as of version 4.6.30, in 4.7 as of version 4.7.11, and will be a part of 4.8.
+You can replace the `buildArgs` in order to cusomize it as you need.
 
-```bash
-$ OCP_VERSION=$(oc get clusterversion/version -ojsonpath={.status.desired.version})
-$ DRIVER_TOOLKIT_IMAGE=$(oc adm release info $OCP_VERSION --image-for=driver-toolkit)
-$ sed “s#DRIVER_TOOLKIT_IMAGE#$DRIVER_TOOLKIT_IMAGE#” 0000-buildconfig.yaml.template > 0000-buildconfig.yaml
-```
-
-Once the builder pod completes successfully, deploy the driver container image as a DaemonSet. The driver container needs to run with the privileged security context in order to load the kernel modules on the host. The following .yaml file contains the RBAC rules and the DaemonSet for running the driver container. Save [this YAML](https://raw.githubusercontent.com/dagrayvid/blog-artifacts/driver-toolkit-blog/introducing-driver-toolkit/1000-driver-container.yaml "this YAML") as `1000-driver-container.yaml`.
+Once the builder pod completes successfully, deploy the driver container image as a DaemonSet. The driver container needs to run with the privileged security context in order to load the kernel modules on the host. The following .yaml file contains the RBAC rules and the DaemonSet for running the driver container. Apply the following yaml:
 
 ```yaml
 apiVersion: v1
@@ -212,11 +185,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: ""
 
-```
-
-Create the RBAC rules and daemon set:
-```bash
-$ oc create -f 1000-drivercontainer.yaml
 ```
 
 Once the pods are running on the worker nodes, we can verify that the `simple_kmod` kernel module is loaded successfully on the host machines with `lsmod`.

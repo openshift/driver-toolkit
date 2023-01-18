@@ -42,7 +42,7 @@ RUN yum -y install xz diffutils \
     && yum clean all
     
 # Packages needed to build driver-containers
-RUN yum -y install git make \
+RUN yum -y install git make rpm-build \
     && yum clean all
 
 # Packages needed to sign and run externally build kernel modules

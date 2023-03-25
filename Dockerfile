@@ -26,7 +26,7 @@ RUN if [ $(arch) = x86_64 ]; then \
 RUN yum -y install kernel-rpm-macros
 
 # Additional packages that are mandatory for driver-containers
-RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw kernel-abi-whitelists \
+RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw \
     && yum clean all
     
 # Find and install the GCC version used to compile the kernel

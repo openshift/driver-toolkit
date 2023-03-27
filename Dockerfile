@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/4.13:base
+FROM registry.ci.openshift.org/ocp/4.13:base-rhel9
 ARG KERNEL_VERSION=''
 ARG RT_KERNEL_VERSION=''
 ARG RHEL_VERSION=''

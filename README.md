@@ -89,7 +89,7 @@ spec:
 
       RUN make all install KVER=${KVER}
 
-      FROM registry.redhat.io/ubi8/ubi-minimal
+      FROM registry.redhat.io/ubi9/ubi-minimal
 
       ARG KVER
 

@@ -31,11 +31,10 @@ RUN yum -y install elfutils-libelf-devel kmod binutils kabi-dw \
     
 # Find and install the GCC version used to compile the kernel
 # If it cannot be found (fails on some architecutres), install the default gcc
-RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) \
-&& GCC_VERSION=$(cat /lib/modules/${INSTALLED_KERNEL}/config | grep -Eo "Compiler: gcc \(GCC\) ([0-9\.]+)" | grep -Eo "([0-9\.]+)") \
-&& yum -y install gcc-${GCC_VERSION} \
-|| yum -y install gcc && \
-yum clean all
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) && \
+    GCC_VERSION=$(cat /lib/modules/${INSTALLED_KERNEL}/config | grep -Eo "gcc \(GCC\) ([0-9\.]+)" | grep -Eo "([0-9\.]+)") && \
+    yum -y install gcc-${GCC_VERSION} || yum -y install gcc && \
+    yum clean all
 
 # Additional packages that are needed for a subset (e.g DPDK) of driver-containers
 RUN yum -y install xz diffutils flex bison \

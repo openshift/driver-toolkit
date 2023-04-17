@@ -7,7 +7,6 @@ RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
 
 # kernel packages needed to build drivers / kmods 
 RUN dnf -y install \
-    kernel-core${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-devel${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-headers${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
@@ -16,7 +15,6 @@ RUN dnf -y install \
 # real-time kernel packages
 RUN if [ $(arch) = x86_64 ]; then \
     dnf -y install \
-    kernel-rt-core${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     kernel-rt-devel${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     kernel-rt-modules${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION}; \
@@ -29,7 +27,7 @@ RUN dnf -y install elfutils-libelf-devel kmod binutils kabi-dw glibc
     
 # Find and install the GCC version used to compile the kernel
 # If it cannot be found (fails on some architectures), install the default gcc
-RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core) && \
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-devel) && \
     GCC_VERSION=$(cat /lib/modules/${INSTALLED_KERNEL}/config | grep -Eo "gcc \(GCC\) ([0-9\.]+)" | grep -Eo "([0-9\.]+)") && \
     dnf -y install gcc-${GCC_VERSION} || dnf -y install gcc
 
@@ -54,7 +52,7 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
       version="0.1"
 
 # Last layer for metadata for mapping the driver-toolkit to a specific kernel version
-RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core); \
+RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-devel); \
     export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core); \
     echo "{ \"KERNEL_VERSION\": \"${INSTALLED_KERNEL}\", \"RT_KERNEL_VERSION\": \"${INSTALLED_RT_KERNEL}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
 

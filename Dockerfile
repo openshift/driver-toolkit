@@ -9,15 +9,11 @@ RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
 RUN dnf -y install \
     kernel-devel${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-headers${KERNEL_VERSION:+-}${KERNEL_VERSION} \
-    kernel-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
-    kernel-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION}
 
 # real-time kernel packages
 RUN if [ $(arch) = x86_64 ]; then \
     dnf -y install \
     kernel-rt-devel${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION}; \
     fi
 
 RUN dnf -y install kernel-rpm-macros
@@ -53,6 +49,6 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
 
 # Last layer for metadata for mapping the driver-toolkit to a specific kernel version
 RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-devel); \
-    export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core); \
+    export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-devel); \
     echo "{ \"KERNEL_VERSION\": \"${INSTALLED_KERNEL}\", \"RT_KERNEL_VERSION\": \"${INSTALLED_RT_KERNEL}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
 

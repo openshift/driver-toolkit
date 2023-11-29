@@ -29,7 +29,7 @@ RUN dnf -y install elfutils-libelf-devel kmod binutils kabi-dw glibc
 # If it cannot be found (fails on some architectures), install the default gcc
 RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-devel) && \
     GCC_VERSION=$(cat /lib/modules/${INSTALLED_KERNEL}/config | grep -Eo "gcc \(GCC\) ([0-9\.]+)" | grep -Eo "([0-9\.]+)") && \
-    dnf -y install gcc-${GCC_VERSION} || dnf -y install gcc
+    dnf -y install gcc-${GCC_VERSION} gcc-c++-${GCC_VERSION} || dnf -y install gcc gcc-c++
 
 # Additional packages that are needed for a subset (e.g DPDK) of driver-containers
 RUN dnf -y install xz diffutils flex bison

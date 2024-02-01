@@ -20,6 +20,16 @@ RUN if [ $(arch) = x86_64 ]; then \
     kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION}; \
     fi
 
+# 64k-pages kernel packages for aarch64
+# Headers are not compiled, so there is no kernel-64k-headers packages,
+# and compilation will use the headers from kernel-headers
+RUN if [ $(arch) = aarch64 ]; then \
+    dnf -y install \
+    kernel-64k-devel${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-64k-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-64k-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION}; \
+    fi
+
 RUN dnf -y install kernel-rpm-macros
 
 # Additional packages that are mandatory for driver-containers

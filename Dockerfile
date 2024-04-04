@@ -2,8 +2,10 @@ FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
 ARG KERNEL_VERSION=''
 ARG RT_KERNEL_VERSION=''
 ARG RHEL_VERSION=''
+# the CentoOS base image does not have the core dnf plugins installed so
+# make sure it is always available
 RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
-    && dnf config-manager --best --setopt=install_weak_deps=False --save
+    && dnf -y install dnf-plugins-core && dnf config-manager --best --setopt=install_weak_deps=False --save
 
 # kernel packages needed to build drivers / kmods 
 RUN dnf -y install \
@@ -11,6 +13,12 @@ RUN dnf -y install \
     kernel-headers${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION}
+
+# when building OKD we switch the base image to CentOS Stream we need to
+# enable the rt repo to have the Real Time Kernel available
+RUN if [ $(arch) = x86_64 ] && grep -q '^ID="centos"' /etc/os-release; then \
+    dnf config-manager --set-enabled rt; \
+    fi
 
 # real-time kernel packages
 RUN if [ $(arch) = x86_64 ]; then \

@@ -57,6 +57,9 @@ RUN dnf clean all
 
 COPY manifests /manifests
 
+ARG TAGS=''
+RUN if [[ "${TAGS}" = *scos* ]]; then sed -i 's/rhel-coreos/stream-coreos/g' /manifests/*; fi
+
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
       io.openshift.release.operator=true \

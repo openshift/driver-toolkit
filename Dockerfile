@@ -9,6 +9,7 @@ RUN [ "${RHEL_VERSION}" == "" ] && source /etc/os-release && RHEL_VERSION=${VERS
 # kernel packages needed to build drivers / kmods 
 RUN dnf -y install \
     kernel-devel${KERNEL_VERSION:+-}${KERNEL_VERSION} \
+    kernel-devel-matched${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-headers${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION}

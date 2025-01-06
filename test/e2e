@@ -132,6 +132,31 @@ test_kernel_version() {
     fi
 }
 
+# Check that driver-toolkit contains the right kernel-rt version
+test_kernel_rt_version() {
+    ocp_version=$(oc get clusterversion -o yaml | yq '.items[0].status.desired.version')
+
+    rhel_coreos_extensions_image=$(oc adm release info quay.io/openshift-release-dev/ocp-release:${ocp_version}-x86_64 \
+        --image-for=rhel-coreos-extensions)
+
+    node_kernel_rt=$(podman run -it --rm ${rhel_coreos_extensions_image} ls /usr/share/rpm-ostree/extensions/ | \
+        grep -oP "kernel-rt-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
+    echo "INFO: Node kernel-rt: ${node_kernel_rt}"
+
+    dtk_release_file=$(get_driver_toolkit_release_file)
+
+    dtk_kernel_rt=$(cat ${dtk_release_file} | jq -r .RT_KERNEL_VERSION | cut -d"+" -f1)
+    echo "INFO: driver-toolkit kernel-rt: ${dtk_kernel_rt}"
+
+    echo "${dtk_kernel_rt}" > ${ARTIFACT_DIR}/dtk-kernel-rt.version
+    echo "${node_kernel_rt}" > ${ARTIFACT_DIR}/node-kernel-rt.version
+
+    if [[ ${dtk_kernel_rt} !=  ${node_kernel_rt} ]]; then
+	    echo "ERROR: driver-toolkit and node kernel-rt version mismatch: (${dtk_kernel_rt} !=  ${node_kernel_rt})"
+	    exit 1
+    fi
+}
+
 #Check that driver-toolkit RHEL_VERSION flag is set correctly.
 test_rhel_version() {
     node_rhel_version=$(get_node_rhel_version)
@@ -210,6 +235,10 @@ test_rhel_version
 echo
 echo "## TEST: Checking that kernel version in driver-toolkit matches the node ##"
 test_kernel_version
+
+echo
+echo "## TEST: Checking that kernel-rt version in driver-toolkit matches the node ##"
+test_kernel_rt_version
 
 echo
 echo "## INFO: Listing kernel packages in driver-toolkit image ##"

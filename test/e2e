@@ -134,7 +134,7 @@ test_kernel_version() {
 
 # Check that driver-toolkit contains the right kernel-rt version
 test_kernel_rt_version() {
-    ocp_version=$(oc get clusterversion -o yaml | yq '.items[0].status.desired.version')
+    ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
 
     rhel_coreos_extensions_image=$(oc adm release info quay.io/openshift-release-dev/ocp-release:${ocp_version}-x86_64 \
         --image-for=rhel-coreos-extensions)

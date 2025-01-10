@@ -15,11 +15,13 @@ RUN dnf -y install \
     kernel-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION}
 
 # real-time kernel packages
+# Also, assert that the kernel and kernel-rt rpms come from the same build. Relevant for 9.3+.
 RUN if [ $(arch) = x86_64 ]; then \
     dnf -y install \
     kernel-rt-devel${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     kernel-rt-modules${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
     kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION}; \
+    diff --side-by-side <(rpm -qi kernel-core | grep 'Source RPM') <(rpm -qi kernel-rt-core | grep 'Source RPM'); \
     fi
 
 # 64k-pages kernel packages for aarch64

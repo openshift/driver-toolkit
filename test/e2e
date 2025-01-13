@@ -136,7 +136,7 @@ test_kernel_version() {
 test_kernel_rt_version() {
     ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
 
-    rhel_coreos_extensions_image=$(oc adm release info quay.io/openshift-release-dev/ocp-release:${ocp_version}-x86_64 \
+    rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/release:${ocp_version} \
         --image-for=rhel-coreos-extensions)
 
     node_kernel_rt=$(podman run -it --rm ${rhel_coreos_extensions_image} ls /usr/share/rpm-ostree/extensions/ | \

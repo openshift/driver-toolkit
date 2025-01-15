@@ -137,10 +137,15 @@ test_kernel_rt_version() {
     ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
 
     rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/release:${ocp_version} \
+        --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=rhel-coreos-extensions)
 
-    node_kernel_rt=$(podman run -it --rm ${rhel_coreos_extensions_image} ls /usr/share/rpm-ostree/extensions/ | \
-        grep -oP "kernel-rt-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
+    node_kernel_rt=$(oc run -it rhel-coreos-extensions -n ${TEST_NS} \
+        --rm \
+        --image=${rhel_coreos_extensions_image} \
+        --restart=Never \
+        --command -- ls /usr/share/rpm-ostree/extensions/ | \
+            grep -oP "kernel-rt-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
     echo "INFO: Node kernel-rt: ${node_kernel_rt}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)

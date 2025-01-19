@@ -145,7 +145,7 @@ test_kernel_rt_version() {
         --image=${rhel_coreos_extensions_image} \
         --restart=Never \
         --command -- ls /usr/share/rpm-ostree/extensions/ | \
-            grep -oP "kernel-rt-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
+            grep -oP "kernel-rt-core-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
     echo "INFO: Node kernel-rt: ${node_kernel_rt}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)

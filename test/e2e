@@ -49,12 +49,13 @@ get_node_rhcos_version() {
 # Get RHEL version from RHCOS. This is the RHEL version which the current RHCOS release is based on.
 get_node_rhel_version() {
     os_release_file=$(get_node_os_release_file)
-    rhel_version=$(cat ${os_release_file} \
-            | grep "RHEL_VERSION" \
-            | cut -d= -f2 \
-            | tr -d \'\")
-
-    echo ${rhel_version}
+    os_release_id=$(source ${os_release_file}; echo ${ID})
+    # https://github.com/openshift/enhancements/blob/master/enhancements/rhcos/split-rhcos-into-layers.md#etcos-release
+    if [ "$os_release_id" = rhcos ]; then
+        (source "${os_release_file}"; echo ${RHEL_VERSION})
+    else
+        (source "${os_release_file}"; echo ${VERSION_ID})
+    fi
 }
 
 # Check if driver-toolkit imagestream is available

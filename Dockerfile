@@ -46,7 +46,7 @@ RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kerne
     dnf -y install gcc-${GCC_VERSION} gcc-c++-${GCC_VERSION} || dnf -y install gcc gcc-c++
 
 # Additional packages that are needed for a subset (e.g DPDK) of driver-containers
-RUN dnf -y install xz diffutils flex bison
+RUN dnf -y install xz diffutils flex bison pciutils
 
 # Packages needed to build driver-containers
 RUN dnf -y install git make rpm-build

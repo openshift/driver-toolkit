@@ -1,13 +1,11 @@
 approvers:
-  - bthurber
+  - nperic
   - enriquebelarte
-  - qbarrand
   - ybettan
   - yevgeny-shnaidman
 reviewers:
-  - bthurber
+  - nperic
   - enriquebelarte
-  - qbarrand
   - ybettan
   - yevgeny-shnaidman
 component: "Driver Toolkit"

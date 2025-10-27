@@ -11,13 +11,6 @@ The list of kernel packages in the Driver Toolkit includes the following and the
 * `kernel-modules`
 * `kernel-modules-extra`
 
-In addition, the Driver Toolkit also includes the corresponding real-time kernel packages:
-
-* `kernel-rt-core`
-* `kernel-rt-devel`
-* `kernel-rt-modules`
-* `kernel-rt-modules-extra`
-
 The Driver Toolkit also has several tools which are commonly needed to build and install kernel modules, including:
 
 * `elfutils-libelf-devel`

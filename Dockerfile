@@ -1,6 +1,5 @@
 FROM registry.ci.openshift.org/ocp/4.12:base
 ARG KERNEL_VERSION=''
-ARG RT_KERNEL_VERSION=''
 ARG RHEL_VERSION=''
 RUN echo ${RHEL_VERSION} > /etc/yum/vars/releasever \
     && yum config-manager --best --setopt=install_weak_deps=False --save
@@ -13,15 +12,6 @@ RUN yum -y install \
     kernel-modules${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     kernel-modules-extra${KERNEL_VERSION:+-}${KERNEL_VERSION} \
     && yum clean all
-
-# real-time kernel packages
-RUN if [ $(arch) = x86_64 ]; then \
-    yum -y install \
-    kernel-rt-core${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-devel${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    kernel-rt-modules-extra${RT_KERNEL_VERSION:+-}${RT_KERNEL_VERSION} \
-    && yum clean all ; fi
 
 RUN yum -y install kernel-rpm-macros
 
@@ -60,6 +50,5 @@ LABEL io.k8s.description="driver-toolkit is a container with the kernel packages
 
 # Last layer for metadata for mapping the driver-toolkit to a specific kernel version
 RUN export INSTALLED_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-core); \
-    export INSTALLED_RT_KERNEL=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}"  kernel-rt-core); \
-    echo "{ \"KERNEL_VERSION\": \"${INSTALLED_KERNEL}\", \"RT_KERNEL_VERSION\": \"${INSTALLED_RT_KERNEL}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
+    echo "{ \"KERNEL_VERSION\": \"${INSTALLED_KERNEL}\", \"RHEL_VERSION\": \"${RHEL_VERSION}\" }" > /etc/driver-toolkit-release.json
 

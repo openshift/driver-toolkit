@@ -187,9 +187,9 @@ list_kernel_packages() {
     oc debug --image-stream="openshift/driver-toolkit:latest" \
 	     -n $TEST_NS \
              --quiet \
-             -- dnf list installed \
+             -- rpm -qa \
         | grep kernel \
-        | tee ${ARTIFACT_DIR}/dnf-list-installed-kernel
+        | tee ${ARTIFACT_DIR}/rpm-list-installed-kernel
 }
 
 get_dtk_image_info() {

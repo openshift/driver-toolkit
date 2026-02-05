@@ -59,16 +59,13 @@ RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
 RUN dnf clean all && rm -rf /var/cache/dnf/*
 
 COPY manifests/01-openshift-imagestream.yaml /manifests/01-openshift-imagestream.yaml
-COPY manifests/image-references /manifests/image-references
-
-ARG TAGS=''
-RUN if echo "${TAGS:-}" | grep -q scos > /dev/null 2>&1; then sed -i 's/rhel-coreos/stream-coreos/g' /manifests/*; fi
+COPY manifests/image-references-rhel10 /manifests/image-references
 
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit" \
       io.openshift.release.operator=true \
       version="0.1" \
-      io.openshift.os.streamclass=rhel-9 \
+      io.openshift.os.streamclass=rhel-10 \
       kernel-version=${KERNEL_VERSION} \
       kernel-rt-version=${RT_KERNEL_VERSION}
 

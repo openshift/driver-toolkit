@@ -56,7 +56,7 @@ RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
     ARCH_DEP_PKGS="mokutil"; fi \
     && dnf -y install openssl keyutils $ARCH_DEP_PKGS
 
-RUN dnf clean all
+RUN dnf clean all && rm -rf /var/cache/dnf/*
 
 COPY manifests /manifests
 

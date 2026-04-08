@@ -135,9 +135,7 @@ test_kernel_version() {
 
 # Check that driver-toolkit contains the right kernel-rt version
 test_kernel_rt_version() {
-    ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
-
-    rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/release:${ocp_version} \
+    rhel_coreos_extensions_image=$(oc adm release info "${RELEASE_IMAGE_LATEST}" \
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=rhel-coreos-extensions)
 

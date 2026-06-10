@@ -137,7 +137,16 @@ test_kernel_version() {
 test_kernel_rt_version() {
     ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
 
-    rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/release:${ocp_version} \
+    # Openshift release payloads are:
+    # Openshift 4.x: registry.ci.openshift.org/ocp/release:<version>
+    # Openshift 5.x: registry.ci.openshift.org/ocp/release-5:<version>
+    if [[ "${OPENSHIFT_5:-false}" == "true" ]]; then
+        release_repo="release-5"
+    else
+        release_repo="release"
+    fi
+
+    rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/${release_repo}:${ocp_version} \
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=rhel-coreos-extensions)
 

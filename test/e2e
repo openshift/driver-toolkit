@@ -2,6 +2,10 @@
 
 set -eux -o pipefail
 
+DTK_TAG=${DTK_TAG:-latest}
+RHCOS_IMAGE_NAME=${RHCOS_IMAGE_NAME:-rhel-coreos}
+RHCOS_EXTENSIONS_IMAGE_NAME=${RHCOS_EXTENSIONS_IMAGE_NAME:-rhel-coreos-extensions}
+
 # Create a namespace for `oc debug` with correct pod
 # security labels (needed since 4.12)
 TEST_NS=openshift-e2e-driver-toolkit
@@ -17,27 +21,42 @@ function cleanup() {
 }
 trap cleanup EXIT
 
-# Gets the /etc/os-release file from a worker node host OS
+set_release_info() {
+    OCP_VERSION=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
+
+    # Openshift release payloads are:
+    # Openshift 4.x: registry.ci.openshift.org/ocp/release:<version>
+    # Openshift 5.x: registry.ci.openshift.org/ocp/release-5:<version>
+    if [[ "${OPENSHIFT_5:-false}" == "true" ]]; then
+        RELEASE_REPO="release-5"
+    else
+        RELEASE_REPO="release"
+    fi
+}
+
+# Gets the /etc/os-release file from the RHCOS payload image
 # Sends the resulting filename to stdout
-get_node_os_release_file() {
+get_rhcos_os_release_file() {
     os_release_file=${ARTIFACT_DIR}/etc-os-release
     if [[ ! -s "${os_release_file}" ]]; then
-	    worker_node=$(oc get nodes --selector='node-role.kubernetes.io/worker' -ojsonpath='{.items[].metadata.name}')
+        rhcos_image=$(oc adm release info registry.ci.openshift.org/ocp/${RELEASE_REPO}:${OCP_VERSION} \
+            --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
+            --image-for=${RHCOS_IMAGE_NAME})
 
-	    oc debug node/${worker_node} \
-            -n $TEST_NS \
-            --quiet \
-            -- cat /host/etc/os-release > ${os_release_file}
+        oc run -it rhcos-os-release -n ${TEST_NS} \
+            --rm \
+            --image=${rhcos_image} \
+            --restart=Never \
+            --command -- cat /etc/os-release > ${os_release_file}
     fi
 
     echo ${os_release_file}
 }
 
 
-# Get running RHCOS version. Assumes all nodes are running the same version.
-# TODO check RT kernel version
-get_node_rhcos_version() {
-    os_release_file=$(get_node_os_release_file)
+# Get RHCOS version from the payload image.
+get_rhcos_version() {
+    os_release_file=$(get_rhcos_os_release_file)
     rhcos_version=$(cat ${os_release_file} \
             | grep "OSTREE_VERSION" \
             | cut -d= -f2 \
@@ -46,9 +65,9 @@ get_node_rhcos_version() {
     echo ${rhcos_version}
 }
 
-# Get RHEL version from RHCOS. This is the RHEL version which the current RHCOS release is based on.
-get_node_rhel_version() {
-    os_release_file=$(get_node_os_release_file)
+# Get RHEL version from the RHCOS payload image.
+get_rhcos_rhel_version() {
+    os_release_file=$(get_rhcos_os_release_file)
     os_release_id=$(source ${os_release_file}; echo ${ID})
     # https://github.com/openshift/enhancements/blob/master/enhancements/rhcos/split-rhcos-into-layers.md#etcos-release
     if [ "$os_release_id" = rhcos ]; then
@@ -65,23 +84,23 @@ test_imagestream() {
 
 # Check for latest and RHCOS tags
 test_imagestream_tags() {
-    rhcos_version=$(get_node_rhcos_version)
-    echo "INFO: Node RHCOS version: ${rhcos_version}"
+    rhcos_version=$(get_rhcos_version)
+    echo "INFO: RHCOS version: ${rhcos_version}"
 
     oc get imagestream/driver-toolkit -n openshift -o json | jq ".spec.tags[].name"
 
-    image_latest=$(oc get imagestream/driver-toolkit -n openshift -o json \
-    	               | jq -r ".spec.tags[] | select(.name == \"latest\") | .from.name")
-    echo "INFO: Image from latest tag: ${image_latest}"
+    image_dtk_tag=$(oc get imagestream/driver-toolkit -n openshift -o json \
+    	               | jq -r ".spec.tags[] | select(.name == \"${DTK_TAG}\") | .from.name")
+    echo "INFO: Image from ${DTK_TAG} tag: ${image_dtk_tag}"
 
-    echo "$image_latest" > ${ARTIFACT_DIR}/latest_image.address
+    echo "$image_dtk_tag" > ${ARTIFACT_DIR}/${DTK_TAG}_image.address
 
     image_rhcos_tag=$(oc get imagestream/driver-toolkit -n openshift -o json \
     	                  | jq  -r ".spec.tags[] | select(.name == \"${rhcos_version}\") | .from.name")
     echo "INFO: Image from RHCOS tag: ${image_rhcos_tag}"
 
-    if [[ ${image_latest} == "" ]]; then
-	    echo "ERROR: driver-toolkit latest tag is empty string"
+    if [[ ${image_dtk_tag} == "" ]]; then
+	    echo "ERROR: driver-toolkit ${DTK_TAG} tag is empty string"
 	    exit 1
     fi
 
@@ -90,8 +109,8 @@ test_imagestream_tags() {
 	    exit 1
     fi
 
-    if [[ ${image_rhcos_tag} != ${image_latest} ]]; then
-	    echo "ERROR: driver-toolkit latest and RHCOS version tags mismatch (${image_rhos_tag} != ${image_latest})"
+    if [[ ${image_rhcos_tag} != ${image_dtk_tag} ]]; then
+	    echo "ERROR: driver-toolkit ${DTK_TAG} and RHCOS version tags mismatch (${image_rhcos_tag} != ${image_dtk_tag})"
 	    exit 1
     fi
 }
@@ -102,7 +121,7 @@ get_driver_toolkit_release_file(){
     driver_toolkit_release=${ARTIFACT_DIR}/driver-toolkit-release.json
 
     if [[ ! -s "${driver_toolkit_release}" ]]; then
-	    oc debug --image-stream="openshift/driver-toolkit:latest" \
+	    oc debug --image-stream="openshift/driver-toolkit:${DTK_TAG}" \
 		    -n $TEST_NS \
 		    --quiet \
 		    -- cat /etc/driver-toolkit-release.json \
@@ -114,10 +133,16 @@ get_driver_toolkit_release_file(){
 
 # Check that driver-toolkit contains the right kernel version
 test_kernel_version() {
-    oc get nodes -oyaml > ${ARTIFACT_DIR}/nodes.yaml
+    rhcos_image=$(oc adm release info registry.ci.openshift.org/ocp/${RELEASE_REPO}:${OCP_VERSION} \
+        --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
+        --image-for=${RHCOS_IMAGE_NAME})
 
-    node_kernel=$(oc get nodes -ojsonpath='{.items[].status.nodeInfo.kernelVersion}')
-    echo "INFO: Node kernel: ${node_kernel}"
+    rhcos_kernel=$(oc run -it rhcos-kernel -n ${TEST_NS} \
+        --rm \
+        --image=${rhcos_image} \
+        --restart=Never \
+        --command -- rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}" kernel-core)
+    echo "INFO: RHCOS kernel: ${rhcos_kernel}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)
 
@@ -125,38 +150,27 @@ test_kernel_version() {
     echo "INFO: driver-toolkit kernel: ${dtk_kernel}"
 
     echo "${dtk_kernel}" > ${ARTIFACT_DIR}/dtk-kernel.version
-    echo "${node_kernel}" > ${ARTIFACT_DIR}/node-kernel.version
+    echo "${rhcos_kernel}" > ${ARTIFACT_DIR}/rhcos-kernel.version
 
-    if [[ ${dtk_kernel} !=  ${node_kernel} ]]; then
-	    echo "ERROR: driver-toolkit and node kernel version mismatch: (${dtk_kernel} !=  ${node_kernel})"
+    if [[ ${dtk_kernel} !=  ${rhcos_kernel} ]]; then
+	    echo "ERROR: driver-toolkit and RHCOS kernel version mismatch: (${dtk_kernel} !=  ${rhcos_kernel})"
 	    exit 1
     fi
 }
 
 # Check that driver-toolkit contains the right kernel-rt version
 test_kernel_rt_version() {
-    ocp_version=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
-
-    # Openshift release payloads are:
-    # Openshift 4.x: registry.ci.openshift.org/ocp/release:<version>
-    # Openshift 5.x: registry.ci.openshift.org/ocp/release-5:<version>
-    if [[ "${OPENSHIFT_5:-false}" == "true" ]]; then
-        release_repo="release-5"
-    else
-        release_repo="release"
-    fi
-
-    rhel_coreos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/${release_repo}:${ocp_version} \
+    rhcos_extensions_image=$(oc adm release info registry.ci.openshift.org/ocp/${RELEASE_REPO}:${OCP_VERSION} \
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
-        --image-for=rhel-coreos-extensions)
+        --image-for=${RHCOS_EXTENSIONS_IMAGE_NAME})
 
-    node_kernel_rt=$(oc run -it rhel-coreos-extensions -n ${TEST_NS} \
+    rhcos_kernel_rt=$(oc run -it rhcos-extensions -n ${TEST_NS} \
         --rm \
-        --image=${rhel_coreos_extensions_image} \
+        --image=${rhcos_extensions_image} \
         --restart=Never \
         --command -- ls /usr/share/rpm-ostree/extensions/ | \
             grep -oP "kernel-rt-core-\K[0-9]+(\.[0-9]+)*-[0-9]+(\.[0-9]+)*\.[a-z0-9_]+(\.[a-z0-9_]+)*(?=\.rpm)")
-    echo "INFO: Node kernel-rt: ${node_kernel_rt}"
+    echo "INFO: RHCOS kernel-rt: ${rhcos_kernel_rt}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)
 
@@ -164,18 +178,18 @@ test_kernel_rt_version() {
     echo "INFO: driver-toolkit kernel-rt: ${dtk_kernel_rt}"
 
     echo "${dtk_kernel_rt}" > ${ARTIFACT_DIR}/dtk-kernel-rt.version
-    echo "${node_kernel_rt}" > ${ARTIFACT_DIR}/node-kernel-rt.version
+    echo "${rhcos_kernel_rt}" > ${ARTIFACT_DIR}/rhcos-kernel-rt.version
 
-    if [[ ${dtk_kernel_rt} !=  ${node_kernel_rt} ]]; then
-	    echo "ERROR: driver-toolkit and node kernel-rt version mismatch: (${dtk_kernel_rt} !=  ${node_kernel_rt})"
+    if [[ ${dtk_kernel_rt} !=  ${rhcos_kernel_rt} ]]; then
+	    echo "ERROR: driver-toolkit and RHCOS kernel-rt version mismatch: (${dtk_kernel_rt} !=  ${rhcos_kernel_rt})"
 	    exit 1
     fi
 }
 
 #Check that driver-toolkit RHEL_VERSION flag is set correctly.
 test_rhel_version() {
-    node_rhel_version=$(get_node_rhel_version)
-    echo "INFO: node RHEL version: ${node_rhel_version}"
+    rhcos_rhel_version=$(get_rhcos_rhel_version)
+    echo "INFO: RHCOS RHEL version: ${rhcos_rhel_version}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)
 
@@ -183,17 +197,17 @@ test_rhel_version() {
     echo "INFO: driver-toolkit RHEL version: ${dtk_rhel_version}"
 
     echo "${dtk_rhel_version}" > ${ARTIFACT_DIR}/dtk-rhel.version
-    echo "${node_rhel_version}" > ${ARTIFACT_DIR}/node-rhel.version
+    echo "${rhcos_rhel_version}" > ${ARTIFACT_DIR}/rhcos-rhel.version
 
-    if [[ ${dtk_rhel_version} !=  ${node_rhel_version} ]]; then
-	    echo "ERROR: driver-toolkit and node RHEL version mismatch: ${dtk_rhel_version} !=  ${node_rhel_version})"
+    if [[ ${dtk_rhel_version} !=  ${rhcos_rhel_version} ]]; then
+	    echo "ERROR: driver-toolkit and RHCOS RHEL version mismatch: ${dtk_rhel_version} !=  ${rhcos_rhel_version})"
 	    exit 1
     fi
 }
 
 list_kernel_packages() {
     # Check that DTK contains all the packages
-    oc debug --image-stream="openshift/driver-toolkit:latest" \
+    oc debug --image-stream="openshift/driver-toolkit:${DTK_TAG}" \
 	     -n $TEST_NS \
              --quiet \
              -- rpm -qa \
@@ -202,13 +216,13 @@ list_kernel_packages() {
 }
 
 get_dtk_image_info() {
-    oc debug --image-stream="openshift/driver-toolkit:latest" \
+    oc debug --image-stream="openshift/driver-toolkit:${DTK_TAG}" \
              -n $TEST_NS \
              --quiet \
              -- bash -c 'echo "$SOURCE_GIT_URL/commit/$SOURCE_GIT_COMMIT"' \
             > ${ARTIFACT_DIR}/git_commit
 
-    oc debug --image-stream="openshift/driver-toolkit:latest" \
+    oc debug --image-stream="openshift/driver-toolkit:${DTK_TAG}" \
 	     -n $TEST_NS \
              --quiet \
              -- env \
@@ -231,8 +245,9 @@ set_artifact_dir() {
         oc get clusterversion/version -oyaml > ${ARTIFACT_DIR}/ocp_version.yaml
 }
 
-echo "#### Driver Toolkit e2e test ####"
+echo "#### Driver Toolkit e2e test (DTK_TAG=${DTK_TAG}, RHCOS=${RHCOS_IMAGE_NAME}) ####"
 set_artifact_dir
+set_release_info
 get_dtk_image_info
 
 echo
@@ -240,19 +255,19 @@ echo "## TEST: Checking imagestream/driver-toolkit ##"
 test_imagestream
 
 echo
-echo "## TEST: Checking that driver-toolkit/imagestream latest and RHCOS tag are matching and non-empty ##"
+echo "## TEST: Checking that driver-toolkit ${DTK_TAG} and RHCOS tag are matching and non-empty ##"
 test_imagestream_tags
 
 echo
-echo "## TEST: Checking that RHEL version in driver-toolkit matches the node ##"
+echo "## TEST: Checking that RHEL version in driver-toolkit matches RHCOS ##"
 test_rhel_version
 
 echo
-echo "## TEST: Checking that kernel version in driver-toolkit matches the node ##"
+echo "## TEST: Checking that kernel version in driver-toolkit matches RHCOS ##"
 test_kernel_version
 
 echo
-echo "## TEST: Checking that kernel-rt version in driver-toolkit matches the node ##"
+echo "## TEST: Checking that kernel-rt version in driver-toolkit matches RHCOS ##"
 test_kernel_rt_version
 
 echo

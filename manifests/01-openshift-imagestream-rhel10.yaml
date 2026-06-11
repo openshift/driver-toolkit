@@ -10,17 +10,17 @@ metadata:
     include.release.openshift.io/single-node-developer: "true"
 spec:
   tags:
-  - name: latest
+  - name: latest-rhel-10
     importPolicy:
       scheduled: true
       importMode: PreserveOriginal
     from:
       kind: DockerImage
-      name: example.com/image-reference-placeholder:driver-toolkit
+      name: example.com/image-reference-placeholder:driver-toolkit-10
   - name: 0.0.1-snapshot-machine-os
     importPolicy:
       scheduled: true
       importMode: PreserveOriginal
     from:
       kind: DockerImage
-      name: example.com/image-reference-placeholder:driver-toolkit
+      name: example.com/image-reference-placeholder:driver-toolkit-10

@@ -2,10 +2,10 @@ kind: ImageStream
 apiVersion: image.openshift.io/v1
 spec:
   tags:
-  - name: driver-toolkit
+  - name: driver-toolkit-10
     from:
       kind: DockerImage
-      name: example.com/image-reference-placeholder:driver-toolkit
+      name: example.com/image-reference-placeholder:driver-toolkit-10
   - name: rhel-coreos-10
     from:
       kind: DockerImage

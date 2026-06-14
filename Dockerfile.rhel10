@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/4.22:base-rhel9
+FROM registry.ci.openshift.org/ocp/5.0:base-rhel9
 ARG KERNEL_VERSION=''
 ARG RT_KERNEL_VERSION=''
 ARG RHEL_VERSION=''
@@ -58,11 +58,11 @@ RUN if [ $(arch) == "x86_64" ] || [ $(arch) == "aarch64" ]; then \
 
 RUN dnf clean all && rm -rf /var/cache/dnf/*
 
-COPY manifests/01-openshift-imagestream.yaml /manifests/01-openshift-imagestream.yaml
+COPY manifests/01-openshift-imagestream-rhel10.yaml /manifests/01-openshift-imagestream.yaml
 COPY manifests/image-references-rhel10 /manifests/image-references
 
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
-      name="driver-toolkit" \
+      name="driver-toolkit-10" \
       io.openshift.release.operator=true \
       version="0.1" \
       io.openshift.os.streamclass=rhel-10 \

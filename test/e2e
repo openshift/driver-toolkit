@@ -43,7 +43,7 @@ get_rhcos_os_release_file() {
             --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
             --image-for=${RHCOS_IMAGE_NAME})
 
-        oc run -it rhcos-os-release -n ${TEST_NS} \
+        oc run -i rhcos-os-release -n ${TEST_NS} \
             --rm \
             --image=${rhcos_image} \
             --restart=Never \
@@ -137,7 +137,7 @@ test_kernel_version() {
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=${RHCOS_IMAGE_NAME})
 
-    rhcos_kernel=$(oc run -it rhcos-kernel -n ${TEST_NS} \
+    rhcos_kernel=$(oc run -i rhcos-kernel -n ${TEST_NS} \
         --rm \
         --image=${rhcos_image} \
         --restart=Never \
@@ -164,7 +164,7 @@ test_kernel_rt_version() {
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=${RHCOS_EXTENSIONS_IMAGE_NAME})
 
-    rhcos_kernel_rt=$(oc run -it rhcos-extensions -n ${TEST_NS} \
+    rhcos_kernel_rt=$(oc run -i rhcos-extensions -n ${TEST_NS} \
         --rm \
         --image=${rhcos_extensions_image} \
         --restart=Never \

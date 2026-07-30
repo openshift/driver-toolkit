@@ -21,6 +21,15 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+run_pod_and_get_logs() {
+    oc run "$@" > /dev/null
+    if ! oc wait --for=jsonpath='{.status.phase}'=Succeeded pod/$1 -n $3 --timeout=300s > /dev/null; then
+        echo "ERROR: pod/$1 failed to reach Succeeded phase" >&2
+        exit 1
+    fi
+    oc logs $1 -n $3
+}
+
 set_release_info() {
     OCP_VERSION=$(oc get clusterversion -o json | jq -r '.items[0].status.desired.version')
 
@@ -43,8 +52,7 @@ get_rhcos_os_release_file() {
             --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
             --image-for=${RHCOS_IMAGE_NAME})
 
-        oc run -i rhcos-os-release -n ${TEST_NS} \
-            --rm \
+        run_pod_and_get_logs rhcos-os-release -n ${TEST_NS} \
             --image=${rhcos_image} \
             --restart=Never \
             --command -- cat /etc/os-release > ${os_release_file}
@@ -137,12 +145,10 @@ test_kernel_version() {
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=${RHCOS_IMAGE_NAME})
 
-    rhcos_kernel=$(oc run -i rhcos-kernel -n ${TEST_NS} \
-        --rm \
+    rhcos_kernel=$(run_pod_and_get_logs rhcos-kernel -n ${TEST_NS} \
         --image=${rhcos_image} \
         --restart=Never \
-        --command -- rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-core \
-        | head -1)
+        --command -- rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-core)
     echo "INFO: RHCOS kernel: ${rhcos_kernel}"
 
     dtk_release_file=$(get_driver_toolkit_release_file)
@@ -165,8 +171,7 @@ test_kernel_rt_version() {
         --registry-config "${CLUSTER_PROFILE_DIR}/pull-secret" \
         --image-for=${RHCOS_EXTENSIONS_IMAGE_NAME})
 
-    rhcos_kernel_rt=$(oc run -i rhcos-extensions -n ${TEST_NS} \
-        --rm \
+    rhcos_kernel_rt=$(run_pod_and_get_logs rhcos-extensions -n ${TEST_NS} \
         --image=${rhcos_extensions_image} \
         --restart=Never \
         --command -- ls /usr/share/rpm-ostree/extensions/ | \

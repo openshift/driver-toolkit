@@ -62,7 +62,7 @@ COPY manifests/01-openshift-imagestream-rhel10.yaml /manifests/01-openshift-imag
 COPY manifests/image-references-rhel10 /manifests/image-references
 
 ARG TAGS=''
-RUN if echo "${TAGS:-}" | grep -q scos > /dev/null 2>&1; then sed -i 's/rhel-coreos/stream-coreos/g' /manifests/*; fi
+RUN if echo "${TAGS:-}" | grep -q scos > /dev/null 2>&1; then sed -i 's/rhel-coreos-10/stream-coreos/g' /manifests/*; fi
 
 LABEL io.k8s.description="driver-toolkit is a container with the kernel packages necessary for building driver containers for deploying kernel modules/drivers on OpenShift" \
       name="driver-toolkit-10" \
